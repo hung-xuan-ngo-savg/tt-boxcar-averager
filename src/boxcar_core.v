@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Hung Xuan Ngo
- * SPDX-License-Identifier: Apache-2.0
- */
 module boxcar_core (
     input  wire        clk,
     input  wire        rst_n,
@@ -33,18 +29,14 @@ module boxcar_core (
     wire [12:0] shifted_sum;
     assign shifted_sum = running_sum >> shift_amt;
 
-    integer i;
-
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            sel_prev     <= sel;        // match sel — prevents spurious switch on cycle 1
+            sel_prev     <= 2'd0;
             wr_ptr       <= 5'd0;
             running_sum  <= 13'd0;
             sample_count <= 6'd0;
             valid        <= 1'b0;
             data_out     <= 8'd0;
-            for (i = 0; i < 32; i = i + 1)
-                buffer[i] <= 8'd0;
         end else begin
             if (sel != sel_prev) begin
                 sel_prev     <= sel;
@@ -53,8 +45,6 @@ module boxcar_core (
                 sample_count <= 6'd0;
                 valid        <= 1'b0;
                 data_out     <= 8'd0;
-                for (i = 0; i < 32; i = i + 1)
-                    buffer[i] <= 8'd0;
             end else begin
                 sel_prev <= sel;
 
@@ -74,5 +64,4 @@ module boxcar_core (
             end
         end
     end
-
 endmodule
