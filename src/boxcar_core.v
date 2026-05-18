@@ -24,15 +24,13 @@ module boxcar_core (
     reg [4:0]  wr_ptr;
     reg [12:0] running_sum;
     reg [5:0]  sample_count;
-    reg [1:0]  sel_prev;         //remember previous sel to detect changes
+    reg [1:0]  sel_prev;
 
-    wire [4:0] ptr_mask      = window_size[4:0] - 5'd1;
-    wire [7:0] oldest_sample = buffer[wr_ptr];
+    wire [4:0] ptr_mask = window_size[4:0] - 5'd1;
 
     integer i;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            // Hard reset
             sel_prev     <= sel;
             wr_ptr       <= 5'd0;
             running_sum  <= 13'd0;
@@ -53,8 +51,12 @@ module boxcar_core (
                 buffer[i] <= 8'd0;
 
         end else begin
-            sel_prev       <= sel;
-            running_sum    <= running_sum - oldest_sample + data_in;
+            sel_prev    <= sel;
+            // buffer[wr_ptr] on the RHS reads the old (oldest) value — safe.
+            // Explicit 13-bit zero-extension also silences the WIDTHEXPAND warnings.
+            running_sum    <= running_sum
+                              - 13'(buffer[wr_ptr])
+                              + 13'(data_in);
             buffer[wr_ptr] <= data_in;
             wr_ptr         <= (wr_ptr + 5'd1) & ptr_mask;
 
@@ -63,7 +65,9 @@ module boxcar_core (
 
             if (sample_count >= window_size - 1)
                 valid <= 1'b1;
-            data_out <= running_sum[12:0] >> shift_amt;
+
+            // Explicit 8-bit truncation silences the WIDTHTRUNC warning.
+            data_out <= 8'(running_sum[12:0] >> shift_amt);
         end
     end
 endmodule
