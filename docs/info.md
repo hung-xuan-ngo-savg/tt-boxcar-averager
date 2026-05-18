@@ -16,5 +16,3 @@ Maintains a circular buffer of up to 32 samples and a 13-bit running sum. Each c
 Apply reset (rst_n low). Set ui_in[7:6] to choose window size. Clock in samples on ui_in[5:0]. After N cycles, valid flag (uio_out[0]) goes high and uo_out holds the running average. Change ui_in[7:6] mid-stream to switch window size.
 
 ## External hardware
-
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
