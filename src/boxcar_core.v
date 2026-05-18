@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2024 Hung Xuan Ngo
- * SPDX-License-Identifier: Apache-2.0
- */
 module boxcar_core (
     input  wire        clk,
     input  wire        rst_n,
@@ -35,7 +31,7 @@ module boxcar_core (
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            sel_prev     <= sel;
+            sel_prev     <= 2'd0;
             wr_ptr       <= 5'd0;
             running_sum  <= 13'd0;
             sample_count <= 6'd0;
@@ -52,9 +48,6 @@ module boxcar_core (
             end else begin
                 sel_prev <= sel;
 
-                // window_full guards against using stale buffer slots —
-                // we only subtract oldest when the ring has wrapped at least once,
-                // so uncleared buffer slots are never read while window_full=0
                 if (window_full)
                     running_sum <= running_sum - oldest_sample_ext + data_in_ext;
                 else
@@ -71,5 +64,4 @@ module boxcar_core (
             end
         end
     end
-
 endmodule
