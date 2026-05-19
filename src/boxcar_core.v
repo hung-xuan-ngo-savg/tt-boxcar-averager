@@ -31,7 +31,7 @@ module boxcar_core (
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            sel_prev     <= 2'd0;
+            sel_prev     <= sel;
             wr_ptr       <= 5'd0;
             running_sum  <= 13'd0;
             sample_count <= 6'd0;
