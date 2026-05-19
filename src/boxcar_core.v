@@ -20,34 +20,40 @@ module boxcar_core (
     reg [12:0] running_sum;
     reg [5:0]  sample_count;
     reg [1:0]  sel_prev;
+    reg        initialized;
 
     wire [4:0]  ptr_mask          = window_size[4:0] - 5'd1;
     wire [12:0] data_in_ext       = {5'b0, data_in};
     wire [12:0] oldest_sample_ext = {5'b0, buffer[wr_ptr]};
     wire        window_full       = sample_count >= window_size;
-
-    wire [12:0] shifted_sum;
-    assign shifted_sum = running_sum >> shift_amt;
+    wire [12:0] shifted_sum       = running_sum >> shift_amt;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            sel_prev     <= sel;
+            // Hard reset — all constants, no $aldff generated
+            initialized  <= 1'b0;
+            sel_prev     <= 2'b00;
             wr_ptr       <= 5'd0;
             running_sum  <= 13'd0;
             sample_count <= 6'd0;
             valid        <= 1'b0;
             data_out     <= 8'd0;
         end else begin
-            if (sel != sel_prev) begin
-                sel_prev     <= sel;
+            // Always track sel and mark as initialized
+            initialized <= 1'b1;
+            sel_prev    <= sel;
+
+            if (initialized && (sel != sel_prev)) begin
+                // Window size changed — soft reset datapath
+                // 'initialized' guard means this never fires on the
+                // first cycle after reset, avoiding spurious resets
                 wr_ptr       <= 5'd0;
                 running_sum  <= 13'd0;
                 sample_count <= 6'd0;
                 valid        <= 1'b0;
                 data_out     <= 8'd0;
             end else begin
-                sel_prev <= sel;
-
+                // Normal operation (also covers first cycle after reset)
                 if (window_full)
                     running_sum <= running_sum - oldest_sample_ext + data_in_ext;
                 else
